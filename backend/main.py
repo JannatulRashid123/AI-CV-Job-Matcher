@@ -100,3 +100,11 @@ async def upload_cv(file: UploadFile = File(...)):
         "text": text,
         "skills": skills
     }
+@app.post("/analyse-job")
+async def analyse_job(job_description: str):
+    job_skills = extract_skills(job_description)
+
+    return {
+        "job_description": job_description,
+        "skills": job_skills
+    }
