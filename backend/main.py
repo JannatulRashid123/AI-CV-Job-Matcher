@@ -108,3 +108,33 @@ async def analyse_job(job_description: str):
         "job_description": job_description,
         "skills": job_skills
     }
+
+
+@app.post("/match")
+async def match_cv_to_job(cv_text: str, job_description: str):
+    cv_skills = extract_skills(cv_text)
+    job_skills = extract_skills(job_description)
+
+    matched_skills = []
+    missing_skills = []
+
+    for skill in job_skills:
+        if skill in cv_skills:
+            matched_skills.append(skill)
+        else:
+            missing_skills.append(skill)
+
+    if len(job_skills) > 0:
+        match_percentage = round(
+            (len(matched_skills) / len(job_skills)) * 100
+        )
+    else:
+        match_percentage = 0
+
+    return {
+        "cv_skills": cv_skills,
+        "job_skills": job_skills,
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills,
+        "match_percentage": match_percentage
+    }
