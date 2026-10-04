@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI CV & Job Matcher</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .section {
+            margin-top: 25px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>AI CV & Job Matcher</h1>
+
+<div class="section">
+    <h2>Upload your CV</h2>
+
+    <input type="file" id="cvFile" accept=".pdf">
+</div>
+
+<div class="section">
+    <h2>Job Description</h2>
+
+    <textarea
+            id="jobDescription"
+            placeholder="Paste the job description here..."
+    ></textarea>
+</div>
+
+<button onclick="analyseMatch()">
+    Analyse Match
+</button>
+
+<div id="results">
+    <h2>Results</h2>
+
+    <p>Your results will appear here.</p>
+</div>
+<script>
+
+    async function analyseMatch() {
+
+        const cvFile = document.getElementById("cvFile").files[0];
+
+        const jobDescription =
+            document.getElementById("jobDescription").value;
+
+        if (!cvFile) {
+            alert("Please upload your CV.");
+            return;
+        }
+
+        if (!jobDescription) {
+            alert("Please enter a job description.");
+            return;
+        }
+
+        document.getElementById("results").innerHTML =
+            "<p>Analysing your CV...</p>";
+
+        try {
+
+            // Read the CV PDF
+            const formData = new FormData();
+
+            formData.append("file", cvFile);
+
+            const uploadResponse = await fetch(
+                "http://127.0.0.1:9000/upload-cv",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            const cvData = await uploadResponse.json();
+
+            // Send CV text and job description to the matcher
+            const matchResponse = await fetch(
+                "http://127.0.0.1:9000/match?" +
+                new URLSearchParams({
+                    cv_text: cvData.text,
+                    job_description: jobDescription
+                }),
+                {
+                    method: "POST"
+                }
+            );
+
+            const matchData = await matchResponse.json();
+
+            // Display results
+            document.getElementById("results").innerHTML = `
+
+            <h2>Match Results</h2>
+
+            <h3>AI Match</h3>
+            <p>
+                ${matchData.ai_match_percentage}%
+            </p>
+
+            <h3>Match Rating</h3>
+            <p>
+                ${matchData.match_rating}
+            </p>
+
+            <h3>Matched Skills</h3>
+            <p>
+                ${matchData.matched_skills.join(", ") || "None"}
+            </p>
+
+            <h3>Missing Skills</h3>
+            <p>
+                ${matchData.missing_skills.join(", ") || "None"}
+            </p>
+
+            <h3>Explanation</h3>
+            <p>
+                ${matchData.match_summary}
+            </p>
+
+            <h3>Recommendations</h3>
+            <ul>
+                ${
+                matchData.recommendations
+                    .map(item => `<li>${item}</li>`)
+                    .join("")
+            }
+            </ul>
+
+        `;
+
+        } catch (error) {
+
+            console.error(error);
+
+            document.getElementById("results").innerHTML =
+                "<p>Something went wrong. Make sure your FastAPI server is running.</p>";
+        }
+    }
+
+</script>
+
+</body>
+</html>
