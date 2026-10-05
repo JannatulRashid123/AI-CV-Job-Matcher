@@ -1,22 +1,23 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from pypdf import PdfReader
 import re
 from sentence_transformers import SentenceTransformer, util
 
-
-# -----------------------------
-# AI MODEL
-# -----------------------------
-
 model = SentenceTransformer("all-MiniLM-L6-v2")
-
-
-# -----------------------------
-# APP
-# -----------------------------
 
 app = FastAPI(title="AI CV & Job Matcher API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500"
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # -----------------------------
 # SKILLS LIST
